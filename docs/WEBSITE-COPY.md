@@ -16,12 +16,12 @@ Features:
 
 Primary CTA: Download Magic for Windows
 Secondary CTA: View source
-Release: 0.10.1, Windows x64, unsigned per-user installer.
+Release: 0.10.2, Windows x64, unsigned per-user installer.
 Install copy: Open Setup, follow the steps, then launch Magic from the Start menu. Optional updates are available inside the app.
 
 Scope note: Magic is a working creative foundation. It does not provide full Adobe/Figma/Office compatibility, editable PDF pages, a spreadsheet engine, or a 3D viewport. LAN/VPN sharing is not hosted cloud collaboration. Core editing works locally; update checks and optional media-engine downloads require Internet access. The app itself does not call an AI service.
 
 Publish only after verifying the live repository and release. Planned source URL: https://github.com/realchasecurtis/magic
-Planned installer URL: https://github.com/realchasecurtis/magic/releases/download/v0.10.1/Magic-Setup-0.10.1.exe
+Planned installer URL: https://github.com/realchasecurtis/magic/releases/download/v0.10.2/Magic-Setup-0.10.2.exe
 
 Use only the supplied assets/mark.png and assets/wordmark.png, or a new blank/demo canvas image. Do not use desktop-preview.png, preview screenshots, or user workspace data from the original project.

@@ -4,13 +4,13 @@ A local, open-source creative workspace: collect files on a visual canvas, arran
 
 ## Windows desktop app
 
-Download **Magic-Setup-0.10.1.exe** from the official release, open it, and follow Setup. Magic installs for your Windows user, adds a Start-menu shortcut, offers an optional desktop shortcut, and appears in Windows Installed apps for uninstalling. Node and a web server are not required. This release is unsigned. Windows may display its normal publisher/reputation prompt.
+Download **Magic-Setup-0.10.2.exe** from the official release, open it, and follow Setup. Magic installs for your Windows user, adds a Start-menu shortcut, offers an optional desktop shortcut, and appears in Windows Installed apps for uninstalling. Node and a web server are not required. This release is unsigned. Windows may display its normal publisher/reputation prompt.
 
 Updates are optional: open Updates, choose **Check for Updates**, then **Download Latest Update** when offered. Magic checks the official GitHub release, verifies the installer checksum, and reveals the download. Save your work and close Magic before opening Setup. Nothing installs automatically. Setup reuses the same installation folder and Magic profile; uninstalling leaves project data intact. Export important projects as .magic backups.
 
 Official release destination reserved for this build: https://github.com/realchasecurtis/magic/releases (publication is pending). Do not advertise this as a working download until the publisher creates the repository and uploads the release.
 
-For a portable development build, open `dist/0.10.1/Magic-win32-x64/Magic.exe` or `Start-Magic.cmd`.
+For a portable development build, open `dist/0.10.2/Magic-win32-x64/Magic.exe` or `Start-Magic.cmd`.
 
 The desktop app keeps a separate local workspace from browser previews. To transfer existing work, save a `.magic` project in the preview and import it in the app. The supplied cyan mark and wordmark are used in the toolbar, favicon, and header.
 
@@ -173,5 +173,5 @@ Comments are excluded from the Layers tree. Use Project comments beside Record t
 Invitation has a separate row below Host this project. Webcam diameter updates the setup preview and its pixel label live; the actual recording overlay uses the selected diameter. On narrow windows, the preview fits the available width while retaining its circular shape.
 
 
-## Windows installer and updates (0.10.1)
+## Windows installer and updates (0.10.2)
 The per-user installer preserves the Magic application name and magic://app origin, so existing desktop IndexedDB projects continue in the same profile. The fixed release feed is realchasecurtis/magic. Manual update checks accept only newer stable semantic versions with an exact Magic-Setup-VERSION.exe asset and matching .sha256 file. Downloads are size/hash verified, marked with Windows ZoneId=3, and revealed for explicit user launch. Forks must change desktop/update-service.cjs to their own trusted release repository. No updater executes an installer automatically.

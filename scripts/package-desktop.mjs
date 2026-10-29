@@ -14,6 +14,7 @@ const paths = await packager({
   prune: false,
   asar: false,
   ignore: file => !!file && !['assets','desktop','src','vendor'].includes(file.split('/')[1]) && !['/index.html','/style.css','/theme.css','/package.json','/LICENSE'].includes(file),
+  icon: "assets/magic.ico",
   executableName: "Magic",
   appVersion: version,
   win32metadata: {

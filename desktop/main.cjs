@@ -21,6 +21,7 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 app.setName("Magic");
+if (process.platform === "win32") app.setAppUserModelId("app.trywoo.magic");
 if (process.env.MAGIC_TEST_PROFILE)
   app.setPath("userData", process.env.MAGIC_TEST_PROFILE);
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -51,7 +52,7 @@ app.whenReady().then(async () => {
     minWidth: 1000,
     minHeight: 650,
     backgroundColor: "#202326",
-    icon: path.join(root, "assets", "mark.png"),
+    icon: path.join(root, "assets", process.platform === "win32" ? "magic.ico" : "mark.png"),
     show: !process.argv.some((arg) =>
       ["--smoke-test", "--test-hidden"].includes(arg),
     ),
