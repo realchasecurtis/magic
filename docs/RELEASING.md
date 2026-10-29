@@ -16,3 +16,6 @@ Installer verification should include a fresh per-user install, update over an e
 The previous executable inherited Electron's embedded icon despite the window using Magic's PNG. This release embeds the supplied transparent Magic artwork at 16, 24, 32, 48, 64, 128, and 256 pixels in the executable and Setup. Windows uses the ICO for the app window, and both shortcuts explicitly use the executable icon and the matching app.trywoo.magic AppUserModelID. The installation AppId, app name, profile, and update repository are unchanged. No Windows icon caches are cleared.
 
 Regenerate assets/magic.ico with scripts/create-icon.ps1. Verify built PE resources using scripts/verify-icons.mjs with MAGIC_RESEDIT_MODULE pointing to the installed resedit module when necessary. UninstallDisplayIcon points to the branded executable; Inno Setup derives the uninstaller icon from SetupIconFile.
+
+## Workspace title typing (0.10.3)
+Space now inserts ordinary whitespace in the project/workspace title. Enter commits, Escape restores the saved name, and clicking away commits. Composing IME keystrokes are not treated as commit/cancel commands. Naming keyboard events do not bubble to canvas shortcuts. No additional icon changes: installed 0.10.2 executable and live window icons were confirmed as Magic.

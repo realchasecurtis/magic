@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
-if exist "dist\0.10.2\Magic-win32-x64\Magic.exe" (
-  start "Magic" "dist\0.10.2\Magic-win32-x64\Magic.exe"
+if exist "dist\0.10.3\Magic-win32-x64\Magic.exe" (
+  start "Magic" "dist\0.10.3\Magic-win32-x64\Magic.exe"
   exit /b 0
 )
 if exist "dist\Magic-win32-x64\Magic.exe" (

@@ -2885,12 +2885,16 @@ function setBranchVisibility(n, value) {
   for (const child of nodes()) if (ids.has(child.id)) child.hidden = value;
 }
 $("#project-name").addEventListener("keydown", (e) => {
-  if (e.code === "Space" || e.key === "Enter") {
+  e.stopPropagation();
+  if (e.isComposing || e.keyCode === 229) return;
+  if (e.key === "Enter" || e.key === "Escape") {
     e.preventDefault();
-    e.stopPropagation();
+    if (e.key === "Escape") e.target.value = current().name;
     e.target.blur();
   }
 });
+for (const event of ["keyup", "keypress"])
+  $("#project-name").addEventListener(event, (e) => e.stopPropagation());
 
 function canvasTarget(n) {
   if (!n) return n;
