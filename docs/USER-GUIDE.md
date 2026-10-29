@@ -105,3 +105,12 @@ Invitation has a separate row below Host this project. Webcam diameter updates t
 
 ## Windows installer and updates (0.10.1)
 The per-user installer preserves the Magic application name and magic://app origin, so existing desktop IndexedDB projects continue in the same profile. The fixed release feed is realchasecurtis/magic. Manual update checks accept only newer stable semantic versions with an exact Magic-Setup-VERSION.exe asset and matching .sha256 file. Downloads are size/hash verified, marked with Windows ZoneId=3, and revealed for explicit user launch. Forks must change desktop/update-service.cjs to their own trusted release repository. No updater executes an installer automatically.
+
+
+## Canvas movement and image performance (0.11.0)
+
+- Project tabs can be dragged into a new order. Neighbouring tabs move during the drag; release to save the order or press Escape to cancel.
+- Moving items shows alignment guides at matching edges and centres. Resizing also offers matching-size guides. Snapping uses a five-screen-pixel tolerance, so it remains consistent across zoom levels. Hold Alt to bypass snapping for fine adjustments.
+- Drag canvas items or layer rows over another Page for about half a second to open it, then continue onto its canvas and release. Container children move with their parent. Releasing over the Page itself centres the items. Escape cancels a transfer; Undo restores it.
+- Duplicates are placed to the right with a 10-pixel gap, moving farther right if another item blocks that position. Imported files are arranged in rows with at least 10 pixels between items and avoid existing content.
+- Images use cached canvas previews at ordinary zoom and originals at high zoom. Undo shares immutable asset strings rather than serializing them repeatedly. Device autosave stores embedded assets separately from project layout and reuses them. Existing device workspaces migrate on their next save; portable .magic files still contain original assets.

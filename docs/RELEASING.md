@@ -19,3 +19,6 @@ Regenerate assets/magic.ico with scripts/create-icon.ps1. Verify built PE resour
 
 ## Workspace title typing (0.10.3)
 Space now inserts ordinary whitespace in the project/workspace title. Enter commits, Escape restores the saved name, and clicking away commits. Composing IME keystrokes are not treated as commit/cancel commands. Naming keyboard events do not bubble to canvas shortcuts. No additional icon changes: installed 0.10.2 executable and live window icons were confirmed as Magic.
+
+## Release 0.11.0
+Integrated the actual 0.11.0 project from the original Magic development checkout using the 0.10.0 packaged source as the merge base. Retained release updater, installer identity, branded Windows icon, and workspace-title keyboard fix. New source modules: alignment.js, image-cache.js, and asset-storage.js. Original developer checkout and live workspace are not modified.

@@ -1,5 +1,5 @@
 const copy = (x) => structuredClone(x),
-  same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
 function fields(a, b, exclude = []) {
   const changes = {};
   for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {

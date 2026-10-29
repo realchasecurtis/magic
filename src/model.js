@@ -1,5 +1,12 @@
 export const uid = () => globalThis.crypto.randomUUID();
-export const clone = (value) => JSON.parse(JSON.stringify(value));
+export const clone = (value) =>
+  Array.isArray(value)
+    ? value.map(clone)
+    : value && typeof value === "object"
+      ? Object.fromEntries(
+          Object.entries(value).map(([key, v]) => [key, clone(v)]),
+        )
+      : value;
 export function node(type, x = 0, y = 0, w = 180, h = 120, extra = {}) {
   return {
     id: uid(),

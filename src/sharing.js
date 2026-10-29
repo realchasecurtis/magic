@@ -36,7 +36,7 @@ export function installSharing({
       api.publishShare({ type: "patch", ops });
     }
   };
-  api?.onShare((message) => {
+  api?.onShare?.((message) => {
     try {
       if (message.type === "snapshot") {
         if (!shared) {

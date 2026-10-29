@@ -1,3 +1,7 @@
+import { compactState, hydrateState, markStored } from "./asset-storage.js";
+import { cacheImage, imageURL } from "./image-cache.js";
+import { snapBounds, duplicateOffset } from "./alignment.js";
+let alignmentGuides = [];
 let commentsPanelOpen = false;
 const mediaExportChoices = new Map();
 import { resizeUpright } from "./resize.js";
@@ -99,6 +103,7 @@ if (db) {
   });
   if (saved) {
     try {
+      await hydrateState(saved, db);
       saved.projects.forEach(validateProject);
       projects = saved.projects;
       activeId = saved.activeId;
@@ -152,9 +157,13 @@ function save() {
       return;
     }
     const tx = db.transaction("workspace", "readwrite");
-    tx.objectStore("workspace").put(clone({ projects, activeId }), "state");
-    tx.oncomplete = () =>
-      ($("#save-state").textContent = "Saved on this device");
+    const keys = [],
+      store = tx.objectStore("workspace");
+    store.put(compactState({ projects, activeId }, store, keys), "state");
+    tx.oncomplete = () => {
+      markStored(keys);
+      $("#save-state").textContent = "Saved on this device";
+    };
     tx.onerror = () => {
       $("#save-state").textContent = "Save failed — export a backup";
       toast("Storage is full or unavailable. Save a project file.");
@@ -314,10 +323,9 @@ function renderCanvas() {
       ? "default"
       : "crosshair";
   const media = new Map(
-    [...document.querySelectorAll("#world video,#world audio")].map((el) => [
-      el.closest("[data-id]").dataset.id,
-      el,
-    ]),
+    [...document.querySelectorAll("#world img,#world video,#world audio")].map(
+      (el) => [el.closest("[data-id]").dataset.id, el],
+    ),
   );
   const moving =
     gesture?.kind === "move"
@@ -337,7 +345,7 @@ function renderCanvas() {
       if (n.type === "text")
         content = `<svg viewBox="0 0 ${n.w} ${n.h}">${shapeSVG(n)}</svg>`;
       else if (n.type === "image")
-        content = `<img src="${esc(n.src)}" alt="${esc(n.name)}">`;
+        content = `<img src="${esc(imageURL(n, v.zoom, renderCanvas))}" alt="${esc(n.name)}" decoding="async">`;
       else if (n.type === "pdf")
         content = `<iframe sandbox src="${esc(n.src)}" title="${esc(n.name)}"></iframe>`;
       else if (n.type === "comment")
@@ -357,6 +365,21 @@ function renderCanvas() {
       fresh.replaceWith(el);
   }
   renderCommentsPanel();
+  for (const line of alignmentGuides) {
+    const vertical = line.axis === "x";
+    $("#world").insertAdjacentHTML(
+      "beforeend",
+      '<div class="alignment-guide" style="left:' +
+        (vertical ? line.value : line.from) +
+        "px;top:" +
+        (vertical ? line.from : line.value) +
+        "px;width:" +
+        (vertical ? 1 / view().zoom : line.to - line.from) +
+        "px;height:" +
+        (vertical ? line.to - line.from : 1 / view().zoom) +
+        'px"></div>',
+    );
+  }
   if (textEditor) positionTextEditor();
   if (dropTarget) {
     const n = nodes().find((n) => n.id === dropTarget);
@@ -712,6 +735,24 @@ $("#viewport").addEventListener("pointermove", (e) => {
       (n) => !g.items.some((p) => p.id === n.parent),
     );
     const excluded = new Set(g.items.map((n) => n.id));
+    const box = bounds(
+      roots.map((start) =>
+        visualBounds(nodes().find((n) => n.id === start.id)),
+      ),
+    );
+    const snap = snapBounds(
+      box,
+      guideTargets(excluded),
+      view().zoom,
+      false,
+      e.altKey,
+    );
+    alignmentGuides = snap.lines;
+    for (const start of g.items) {
+      const n = nodes().find((n) => n.id === start.id);
+      n.x += snap.dx;
+      n.y += snap.dy;
+    }
     dropTarget =
       nodes()
         .filter(
@@ -758,6 +799,19 @@ $("#viewport").addEventListener("pointermove", (e) => {
         e.shiftKey && n.type !== "text",
       ),
     );
+    const snap = snapBounds(
+      visualBounds(n),
+      guideTargets(new Set(g.items.map((n) => n.id))),
+      view().zoom,
+      true,
+      e.altKey,
+    );
+    alignmentGuides = snap.lines;
+    if (!e.altKey)
+      Object.assign(
+        n,
+        resizeUpright(n, snap.dx, snap.dy, e.shiftKey && n.type !== "text"),
+      );
     if (n.type === "text")
       fitText(n, Math.abs(p.x - g.p.x) < Math.abs(p.y - g.p.y) ? "h" : "w");
     renderCanvas();
@@ -805,6 +859,8 @@ $("#viewport").addEventListener("pointermove", (e) => {
 function finishGesture() {
   if (!gesture) return;
   const g = gesture;
+  alignmentGuides = [];
+  clearPageHover();
   if (g.kind === "pen-handle") {
     gesture = null;
     drawDraft();
@@ -1077,9 +1133,34 @@ function command(cmd) {
       pg().nodes = nodes().filter((n) => !ids.has(n.id));
       selected.clear();
     } else if (cmd === "duplicate") {
-      const copies = copyNodes(nodes(), selected);
+      const originals = nodes().filter((n) => ids.has(n.id)),
+        roots = originals.filter((n) => !ids.has(n.parent));
+      const ancestors = new Set();
+      for (const root of roots) {
+        let parent = nodes().find((n) => n.id === root.parent);
+        while (parent) {
+          ancestors.add(parent.id);
+          parent = nodes().find((n) => n.id === parent.parent);
+        }
+      }
+      const box = bounds(roots.map(visualBounds)),
+        dx = duplicateOffset(
+          box,
+          nodes()
+            .filter((n) => !ancestors.has(n.id) && n.type !== "comment")
+            .map(visualBounds),
+        );
+      const copies = copyNodes(nodes(), selected, 0);
+      copies.forEach((copy, i) => {
+        copy.x += dx;
+        if (!ids.has(originals[i].parent)) copy.parent = originals[i].parent;
+      });
       nodes().push(...copies);
-      selected = new Set(copies.filter((n) => !n.parent).map((n) => n.id));
+      selected = new Set(
+        copies
+          .filter((n) => !copies.some((p) => p.id === n.parent))
+          .map((n) => n.id),
+      );
     } else if (cmd === "group" || cmd === "frame") {
       const b = bounds(list),
         container = node(cmd, b.x - 16, b.y - 16, b.w + 32, b.h + 32, {
@@ -1304,12 +1385,13 @@ async function importFiles(files, at) {
         });
         w = Math.min(500, img.naturalWidth);
         h = (w * img.naturalHeight) / img.naturalWidth;
+        await cacheImage(src, img, file);
       } catch {
         toast(`Image preview unavailable: ${file.name}`);
       }
     }
     added.push(
-      node(type, base.x + i * 30, base.y + i * 30, w, h, {
+      node(type, base.x, base.y, w, h, {
         name: file.name,
         src,
         mime: file.type,
@@ -1318,6 +1400,41 @@ async function importFiles(files, at) {
     );
   }
   if (added.length) {
+    let x = base.x,
+      y = base.y,
+      rowHeight = 0;
+    const rowWidth = Math.max(
+      500,
+      ($("#viewport").clientWidth - 100) / view().zoom,
+    );
+    for (const item of added) {
+      if (x > base.x && x + item.w > base.x + rowWidth) {
+        x = base.x;
+        y += rowHeight + 10;
+        rowHeight = 0;
+      }
+      item.x = x;
+      item.y = y;
+      for (let pass = 0; pass <= target.nodes.length; pass++) {
+        const hit = target.nodes.find(
+          (n) =>
+            n.type !== "comment" &&
+            (() => {
+              const b = visualBounds(n);
+              return (
+                item.x < b.x + b.w + 10 &&
+                item.x + item.w + 10 > b.x &&
+                item.y < b.y + b.h + 10 &&
+                item.y + item.h + 10 > b.y
+              );
+            })(),
+        );
+        if (!hit) break;
+        item.x = visualBounds(hit).x + visualBounds(hit).w + 10;
+      }
+      x = item.x + item.w + 10;
+      rowHeight = Math.max(rowHeight, item.h);
+    }
     change(() => {
       target.nodes.push(...added);
       if (activeId === projectId && pg().id === target.id)
@@ -3087,3 +3204,240 @@ function renderCommentsPanel() {
 }
 for (const event of ["pointerdown", "wheel", "dblclick", "contextmenu"])
   $("#comments-panel").addEventListener(event, (e) => e.stopPropagation());
+
+function guideTargets(excluded) {
+  const ancestors = new Set();
+  for (const id of excluded) {
+    let n = nodes().find((n) => n.id === id);
+    while (n?.parent) {
+      ancestors.add(n.parent);
+      n = nodes().find((p) => p.id === n.parent);
+    }
+  }
+  return nodes()
+    .filter(
+      (n) =>
+        !excluded.has(n.id) &&
+        !ancestors.has(n.id) &&
+        n.type !== "comment" &&
+        !hidden(n),
+    )
+    .map(visualBounds);
+}
+let pageHoverTimer = null,
+  pageHoverId = null,
+  lastDragPointer = null;
+function clearPageHover() {
+  clearTimeout(pageHoverTimer);
+  pageHoverTimer = null;
+  pageHoverId = null;
+  document
+    .querySelectorAll(".page-drop-hover")
+    .forEach((el) => el.classList.remove("page-drop-hover"));
+}
+function transferDragToPage(g, pageId, e) {
+  const destination = current().pages.find((p) => p.id === pageId);
+  if (!destination || destination === pg()) return;
+  const source = pg();
+  if (!g.items) {
+    const root = nodes().find((n) => n.id === g.id);
+    if (!root || locked(root)) return;
+    checkpoint();
+    const ids = descendants(
+      nodes(),
+      selected.has(root.id) ? selected : new Set([root.id]),
+    );
+    g.items = clone(nodes().filter((n) => ids.has(n.id)));
+  }
+  const ids = new Set(g.items.map((n) => n.id)),
+    moving = source.nodes.filter((n) => ids.has(n.id));
+  if (!moving.length) return;
+  const roots = moving.filter((n) => !ids.has(n.parent));
+  for (const n of roots) n.parent = null;
+  source.nodes = source.nodes.filter((n) => !ids.has(n.id));
+  destination.nodes.push(...moving);
+  current().activePage = destination.id;
+  enteredContainer = null;
+  editingId = null;
+  selected = new Set(roots.map((n) => n.id));
+  g.transferred = true;
+  alignmentGuides = [];
+  dropTarget = null;
+  const box = bounds(roots.map(visualBounds)),
+    p = point(e);
+  for (const n of moving) {
+    n.x += p.x - box.x - box.w / 2;
+    n.y += p.y - box.y - box.h / 2;
+  }
+  g.items = clone(moving);
+  g.p = p;
+  render();
+}
+window.addEventListener("pointermove", (e) => {
+  const g =
+    gesture?.kind === "move"
+      ? gesture
+      : treeDrag?.id && treeDrag.moved
+        ? treeDrag
+        : null;
+  if (!g) {
+    clearPageHover();
+    return;
+  }
+  lastDragPointer = { clientX: e.clientX, clientY: e.clientY };
+  if (g === treeDrag && g.transferred) {
+    const p = point(e);
+    for (const item of g.items) {
+      const n = nodes().find((n) => n.id === item.id);
+      if (n) {
+        n.x = item.x + p.x - g.p.x;
+        n.y = item.y + p.y - g.p.y;
+      }
+    }
+    renderCanvas();
+  }
+  const button = document
+      .elementFromPoint(e.clientX, e.clientY)
+      ?.closest("#pages [data-page]"),
+    id = button?.dataset.page;
+  if (!id || id === pg().id) {
+    clearPageHover();
+    return;
+  }
+  if (id === pageHoverId) return;
+  clearPageHover();
+  pageHoverId = id;
+  button.classList.add("page-drop-hover");
+  pageHoverTimer = setTimeout(() => {
+    pageHoverTimer = null;
+    if ((gesture === g || treeDrag === g) && lastDragPointer)
+      transferDragToPage(g, id, lastDragPointer);
+  }, 450);
+});
+window.addEventListener(
+  "pointerup",
+  (e) => {
+    const g = gesture?.kind === "move" ? gesture : treeDrag;
+    if (g?.transferred) {
+      const r = $("#viewport").getBoundingClientRect();
+      if (
+        e.clientX < r.left ||
+        e.clientX > r.right ||
+        e.clientY < r.top ||
+        e.clientY > r.bottom
+      ) {
+        const ids = new Set(g.items.map((n) => n.id)),
+          moving = nodes().filter((n) => ids.has(n.id)),
+          box = bounds(
+            moving.filter((n) => !ids.has(n.parent)).map(visualBounds),
+          ),
+          v = view();
+        for (const n of moving) {
+          n.x += (r.width / 2 - v.x) / v.zoom - box.x - box.w / 2;
+          n.y += (r.height / 2 - v.y) / v.zoom - box.y - box.h / 2;
+        }
+        renderCanvas();
+      }
+      save();
+    }
+    clearPageHover();
+  },
+  true,
+);
+window.addEventListener(
+  "keydown",
+  (e) => {
+    if (e.key === "Escape" && (gesture?.transferred || treeDrag?.transferred)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      gesture = null;
+      treeDrag = null;
+      alignmentGuides = [];
+      dropTarget = null;
+      clearPageHover();
+      document.body.style.cursor = "";
+      restore(history, future);
+    }
+  },
+  true,
+);
+let tabDrag = null,
+  suppressTabClick = false;
+$("#tabs").addEventListener("pointerdown", (e) => {
+  const button = e.target.closest("[data-project]");
+  if (e.button || !button) return;
+  tabDrag = {
+    id: button.dataset.project,
+    startX: e.clientX,
+    order: projects.map((p) => p.id),
+    moved: false,
+  };
+});
+$("#tabs").addEventListener("pointermove", (e) => {
+  const g = tabDrag;
+  if (!g) return;
+  if (!g.moved && Math.abs(e.clientX - g.startX) < 5) return;
+  if (!g.moved) {
+    checkpoint();
+    g.moved = true;
+    $("#tabs").setPointerCapture(e.pointerId);
+  }
+  const others = [...$("#tabs").querySelectorAll(".tab")].filter(
+    (el) => el.querySelector("[data-project]").dataset.project !== g.id,
+  );
+  let index = others.findIndex((el) => {
+    const r = el.getBoundingClientRect();
+    return e.clientX < r.x + r.width / 2;
+  });
+  if (index < 0) index = others.length;
+  const moving = projects.find((p) => p.id === g.id),
+    rest = projects.filter((p) => p.id !== g.id);
+  rest.splice(index, 0, moving);
+  projects = rest;
+  renderTabs();
+  $("#tabs")
+    .querySelector('[data-project="' + g.id + '"]')
+    .closest(".tab")
+    .classList.add("tab-dragging");
+  const r = $("#tabs").getBoundingClientRect();
+  if (e.clientX > r.right - 30) $("#tabs").scrollLeft += 20;
+  if (e.clientX < r.left + 30) $("#tabs").scrollLeft -= 20;
+});
+$("#tabs").addEventListener("pointerup", () => {
+  if (tabDrag?.moved) {
+    suppressTabClick = true;
+    renderTabs();
+    save();
+    setTimeout(() => (suppressTabClick = false), 0);
+  }
+  tabDrag = null;
+});
+$("#tabs").addEventListener(
+  "click",
+  (e) => {
+    if (suppressTabClick) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  },
+  true,
+);
+function cancelTabDrag() {
+  if (!tabDrag) return;
+  const order = tabDrag.order;
+  projects.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  if (tabDrag.moved) history.pop();
+  tabDrag = null;
+  renderTabs();
+}
+$("#tabs").addEventListener("pointercancel", cancelTabDrag);
+window.addEventListener(
+  "keydown",
+  (e) => {
+    if (e.key === "Escape" && tabDrag) {
+      e.stopImmediatePropagation();
+      cancelTabDrag();
+    }
+  },
+  true,
+);

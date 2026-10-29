@@ -1303,5 +1303,26 @@ dialog:has(#share-invite) input {
   aspect-ratio: 1 / 1;
   height: auto !important;
 }
+.alignment-guide {
+  position: absolute;
+  pointer-events: none;
+  background: #ff7059;
+  z-index: 90;
+}
+#pages .page-drop-hover {
+  outline: 2px solid #12cafd;
+  background: #164d5b;
+}
+.tab.tab-dragging {
+  outline: 2px solid #12cafd;
+  opacity: 0.7;
+}
+#tabs [data-project] {
+  cursor: grab;
+  touch-action: none;
+}
+.tab.tab-dragging [data-project] {
+  cursor: grabbing;
+}
 
 .update-glow{background:linear-gradient(110deg,#176fcb,#45baff,#176fcb);background-size:220% 100%;color:white;box-shadow:0 0 14px #329dff88;animation:magic-update-wave 3s ease-in-out infinite}.update-glow:disabled{animation:none;opacity:.65}@keyframes magic-update-wave{0%,100%{background-position:0% 50%;box-shadow:0 0 10px #329dff66}50%{background-position:100% 50%;box-shadow:0 0 22px #329dffaa}}@media(prefers-reduced-motion:reduce){.update-glow{animation:none}}
