@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; frame-src 'self' data: blob:; font-src 'self' data:; object-src 'none'; connect-src 'self'"
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/png" href="assets/mark.png" />
+    <title>Magic — Creative workspace</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="theme.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#" aria-label="Magic home"
+        ><img src="assets/wordmark.png" alt="Magic"
+      /></a>
+      <nav id="tabs" aria-label="Projects"></nav>
+      <button id="new-project" title="New project">＋</button
+      ><span class="local">● LOCAL WORKSPACE</span
+      ><button id="updates">UPDATES</button>
+    </header>
+    <main>
+      <aside class="left">
+        <div class="project-heading">
+          <span class="eyebrow">WORKSPACE</span
+          ><input id="project-name" aria-label="Project name" />
+          <div class="save-state" id="save-state">Saved on this device</div>
+        </div>
+        <section>
+          <div class="section-title">
+            Pages
+            <div>
+              <button id="search-toggle" title="Search pages and layers">
+                ⌕</button
+              ><button id="new-page" title="Add page">＋</button>
+            </div>
+          </div>
+          <input
+            id="search"
+            type="search"
+            placeholder="Search pages and layers…"
+            aria-label="Search pages and layers"
+          />
+          <div id="pages"></div>
+        </section>
+        <section class="layer-section">
+          <div class="section-title">
+            Layers
+            <div>
+              <button id="collapse" title="Collapse or expand all">⇅</button>
+            </div>
+          </div>
+          <div id="layers"></div>
+        </section>
+        <div class="sidebar-footer">
+          <button id="import">↥ Import files</button
+          ><small>Drop anything onto your canvas</small>
+        </div>
+      </aside>
+      <div class="workspace">
+        <div class="canvas-top">
+          <div>
+            <span class="breadcrumb" id="breadcrumb"></span
+            ><span class="badge">CANVAS</span>
+          </div>
+          <div class="canvas-controls">
+            <button id="undo" title="Undo · Ctrl Z">↶</button
+            ><button id="redo" title="Redo · Ctrl Shift Z">↷</button
+            ><span class="separator"></span
+            ><button id="zoom-out" title="Zoom out">−</button
+            ><button id="zoom" title="Fit content">100%</button
+            ><button id="zoom-in" title="Zoom in">＋</button
+            ><button id="save-project" class="primary">Save project ↗</button>
+          </div>
+        </div>
+        <div id="viewport" tabindex="0" aria-label="Design canvas">
+          <button id="help" title="Guide" aria-label="Guide">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 8a4 4 0 0 1 8 0c0 3-4 3-4 6" />
+              <circle cx="12" cy="18" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          <div id="canvas-session-tools">
+            <button
+              id="share-button"
+              title="Add person to project"
+              aria-label="Add person to project"
+            >
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="7" r="3" />
+                <path d="M3 20v-2a6 6 0 0 1 12 0v2M18 8v6M15 11h6" />
+              </svg></button
+            ><button
+              id="record-button"
+              title="Start recording"
+              aria-label="Record Magic"
+            >
+              ●
+            </button>
+            <button
+              id="comments-toggle"
+              title="Project comments"
+              aria-label="Project comments"
+              aria-expanded="false"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 4h16v12H9l-5 4Z M8 8h8 M8 12h5" />
+              </svg>
+            </button>
+          </div>
+          <aside
+            id="comments-panel"
+            hidden
+            aria-label="Project comments"
+          ></aside>
+          <div id="world"></div>
+          <div id="marquee"></div>
+        </div>
+        <div class="canvas-status">
+          <span id="status">Your ideas, all in one place.</span
+          ><span>Space + drag to pan · Scroll to zoom</span>
+        </div>
+        <div class="toolbar" role="toolbar" aria-label="Canvas tools">
+          <button data-tool="move" title="Move · V"><span>↖</span></button
+          ><button data-tool="frame" title="Frame · F"><span>⊞</span></button>
+          <div class="tool-combo">
+            <button data-tool="shape" title="Shape · R"><span>□</span></button
+            ><button
+              class="tool-chevron"
+              data-tool-menu="shape"
+              aria-label="Choose shape"
+            >
+              ⌄</button
+            ><select hidden id="shape" aria-label="Shape type">
+              <option value="rectangle">Rectangle</option>
+              <option value="triangle">Triangle</option>
+              <option value="line">Line</option>
+              <option value="arrow">Arrow</option>
+              <option value="ellipse">Ellipse</option>
+              <option value="polygon">Polygon</option>
+              <option value="star">Star</option>
+            </select>
+          </div>
+          <div class="tool-combo">
+            <button data-tool="pen" title="Pen · P"><span>♢</span></button
+            ><button
+              class="tool-chevron"
+              data-tool-menu="draw"
+              aria-label="Choose drawing tool"
+            >
+              ⌄</button
+            ><select hidden id="draw" aria-label="Drawing tool">
+              <option value="pen">Pen</option>
+              <option value="pencil">Pencil</option>
+            </select>
+          </div>
+          <button data-tool="text" title="Text · T"><span>T</span></button
+          ><button data-tool="comment" title="Comment · C">
+            <span>☏</span></button
+          ><span class="separator"></span
+          ><button id="actions" title="Actions">
+            <img src="assets/mark.png" alt="" /> Actions
+          </button>
+        </div>
+      </div>
+      <aside class="right">
+        <div class="inspector-heading">
+          <b>Design</b><span class="badge">PROPERTIES</span>
+        </div>
+        <div id="inspector"></div>
+        <div id="export-panel"></div>
+      </aside>
+    </main>
+    <input id="file-input" type="file" multiple hidden /><input
+      id="project-input"
+      type="file"
+      accept=".magic,.json"
+      hidden
+    />
+    <div id="tool-menu" class="menu tool-menu" hidden></div>
+    <div id="context-menu" class="menu" hidden></div>
+    <dialog id="dialog">
+      <div id="dialog-content"></div>
+      <button id="dialog-close" class="dialog-close" aria-label="Close dialog">
+        ×
+      </button>
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

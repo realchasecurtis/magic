@@ -1,0 +1,1 @@
+box.fbx is the Assimp upstream test fixture from https://raw.githubusercontent.com/assimp/assimp/master/test/models/FBX/box.fbx, downloaded 2026-10-28. Assimp license: ../../vendor/assimp/license.assimp.txt.

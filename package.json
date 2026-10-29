@@ -1,0 +1,36 @@
+{
+  "name": "magic-creative-workspace",
+  "version": "0.10.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/model.test.js tests/upgrade.test.js tests/refinement.test.js tests/workspace.test.js tests/creation5.test.js",
+    "test:browser": "node tests/browser-smoke.mjs && node tests/upgrade-browser.mjs && node tests/refinement-browser.mjs && node tests/actions-browser.mjs && node tests/workspace-browser.mjs && node tests/layers-browser.mjs && node tests/creation5-browser.mjs",
+    "test:desktop": "node tests/desktop-smoke.mjs",
+    "desktop": "electron .",
+    "package:desktop": "node scripts/package-desktop.mjs",
+    "test:collaboration-recording": "node tests/desktop5.mjs && node tests/recording-real5.mjs",
+    "test:fbx": "node tests/fbx5.mjs",
+    "test:interactions": "node tests/interactions6-browser.mjs",
+    "test:media": "node tests/media6.mjs && node tests/media6-desktop.mjs",
+    "test:inspector": "node tests/inspector7-browser.mjs",
+    "test:refinements8": "node --test tests/resize8.test.js && node tests/pencil8-browser.mjs && node tests/refinements8-browser.mjs",
+    "test:webm": "node tests/webm11.mjs",
+    "test:editor12": "node tests/editor12-browser.mjs",
+    "test:updates": "node --test tests/updates.test.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "assimpjs": "^0.0.10",
+    "electron": "^45.0.0",
+    "imagetracerjs": "^1.2.6",
+    "prettier": "^3.9.10"
+  },
+  "main": "desktop/main.cjs",
+  "description": "Magic creative workspace"
+}

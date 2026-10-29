@@ -1,0 +1,13 @@
+node_modules/
+.pnpm-store/
+test-results/
+tests/test-output.magic
+preview.png
+*.log
+Magic-source.zip
+dist/
+desktop-test-profile/
+preview-v2.png
+desktop-preview.png
+
+release/
